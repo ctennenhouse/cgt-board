@@ -1,0 +1,149 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% Style file cgt-board.sty for game boards. Place pieces in PDF/PNG format in /pieces.
+% Assignments made with \definepiece{a}{pieces/amw}.
+% Command with...
+%
+% \setsquaresize{0.25in} 
+% \setsquarecolor{black}[white]
+% \drawboard{
+% {a,A,.,.,c,C,.,.},
+% {d,D,.*,.*, el,rh}
+% }
+%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% \setsquaresize{height}[width]
+%
+% \setsquaresize{0.3in}[0.25in]
+% \setsquarecolor{black}[white]
+% \drawboard{
+%  {a,A,.,.,c,C},
+%  {d,D,.*,.*, el,rh}
+%  }
+%
+%
+%
+%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\usepackage{xparse}
+\usepackage{xcolor}
+\usepackage{expl3}
+\usepackage{graphicx}
+ 
+\ExplSyntaxOn
+% A `prop` is a key-value store.
+\prop_new:N \g_chess_pieces_prop
+\dim_new:N \g_chess_square_height_dim
+\dim_new:N \g_chess_square_width_dim
+\dim_gset:Nn \g_chess_square_height_dim {1cm}
+\dim_gset:Nn \g_chess_square_width_dim {1cm}
+\tl_new:N \g_chess_square_line_color
+\tl_gset:Nx \g_chess_square_line_color {black}
+\tl_new:N \g_chess_square_fill_color
+\tl_gset:Nx \g_chess_square_fill_color {white}
+ 
+\NewDocumentCommand{\setsquaresize}{ m o }{
+   \dim_gset:Nn \g_chess_square_height_dim {#1}
+   \IfNoValueTF{#2}{
+       \dim_gset:Nn \g_chess_square_width_dim {#1}
+   }{
+       \dim_gset:Nn \g_chess_square_width_dim {#2}
+   }
+}
+\NewDocumentCommand{\setsquarecolor}{ m o }{
+   \tl_gset:Nx \g_chess_square_line_color {#1}
+   \IfNoValueF{#2}{
+       \tl_gset:Nx \g_chess_square_fill_color {#2}
+   }
+}
+\NewDocumentCommand{\drawmissing}{}{
+   \fcolorbox{darkgray}{darkgray}{\makebox[\g_chess_square_width_dim]{\rule{0pt}{\g_chess_square_height_dim}}}
+}
+\NewDocumentCommand{\definepiece}{ s m m }{
+   \IfBooleanTF{#1}{
+        % Called with a star, we accept arbitrary LaTeX inside a minipage
+        \prop_gput:Non \g_chess_pieces_prop {#2}{
+           \fcolorbox{\g_chess_square_line_color}{\g_chess_square_fill_color}{
+               \begin{minipage}[b][\g_chess_square_height_dim][c]{\g_chess_square_width_dim}
+                   #3
+               \end{minipage}
+           }
+       }
+       \prop_gput:Non \g_chess_pieces_prop {#2*}{
+           \hspace*{\fboxsep}\hspace*{\fboxrule}
+           \begin{minipage}[b][\g_chess_square_height_dim][c]{\g_chess_square_width_dim}
+               #3
+           \end{minipage}
+           \hspace*{\fboxsep}\hspace*{\fboxrule}
+       }
+   }{
+        % Called with no star, we are including an image file.
+        % Create two versions of the object, one with a frame,
+        %  and a starred version without the frame.
+        \prop_gput:Non \g_chess_pieces_prop {#2}{
+           \fcolorbox{\g_chess_square_line_color}{\g_chess_square_fill_color}{
+               \begin{minipage}[b][\g_chess_square_height_dim][c]{\g_chess_square_width_dim}\centering
+               \includegraphics[width=\g_chess_square_width_dim,height=\g_chess_square_height_dim,keepaspectratio]{#3}
+               \end{minipage}
+           }
+       }
+       \prop_gput:Non \g_chess_pieces_prop {#2*}{
+           \hspace*{\fboxsep}\hspace*{\fboxrule}
+           \begin{minipage}[b][\g_chess_square_height_dim][c]{\g_chess_square_width_dim}\centering
+           \includegraphics[width=\g_chess_square_width_dim,height=\g_chess_square_height_dim,keepaspectratio]{#3}
+           \end{minipage}
+           \hspace*{\fboxsep}\hspace*{\fboxrule}
+       }
+   }
+}
+\NewDocumentCommand{\drawpiece}{ m }{
+ 
+   \prop_get:NnNTF \g_chess_pieces_prop {#1} \l_tmpa_tl {
+       \l_tmpa_tl
+   }{
+       \drawmissing
+   }
+}
+\NewDocumentCommand{\drawline}{ m }{
+   \clist_clear_new:N \l_line_of_pieces_clist
+   \clist_set:Nn \l_line_of_pieces_clist {#1}
+   \clist_map_inline:Nn \l_line_of_pieces_clist {
+       \drawpiece{##1}
+   }
+}
+\NewDocumentCommand{\drawboard}{ m }{
+   \par\noindent
+   \clist_clear_new:N \l_board_clist
+   \clist_set:Nn \l_board_clist {#1}
+ 
+   \clist_map_inline:Nn \l_board_clist {
+     \drawline{##1} \\[-0.1\baselineskip]
+   }
+ 
+ 
+}
+\ExplSyntaxOff
+
+% Default piece assignments. These can be re-defined in the document.
+
+% Where pieces is a folder containing A.pdf, B.pdf, etc.
+% (though they could be PNG, JPG, or other image formats)
+\definepiece{a}{pieces/amw}
+\definepiece{A}{pieces/amb} 
+\definepiece{c}{pieces/clw}
+\definepiece{C}{pieces/clb}
+\definepiece{d}{pieces/dow}
+\definepiece{D}{pieces/dob} 
+\definepiece{el}{pieces/el}
+\definepiece{rh}{pieces/rh}
+\definepiece{p}{pieces/puw}
+\definepiece{P}{pieces/pub} 
+
+% Define a blank square using LaTeX instead of a PDF file:
+\definepiece*{.}{~}
+ 
+
+
